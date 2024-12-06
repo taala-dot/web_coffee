@@ -36,7 +36,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'talgat.temirov@alatoo.edu.kg'
-EMAIL_HOST_PASSWORD = 'Talgat321'
+EMAIL_HOST_PASSWORD = ''
 DEFAULT_FROM_EMAIL = ''
 INSTALLED_APPS = [
     'my_app',
