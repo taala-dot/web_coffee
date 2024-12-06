@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="shortcut icon" href="assets/img/favicon.png" type="image/x-icon">
+        <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+        <link rel="stylesheet" href="assets/css/lk.css">
+
+        <title>BUMP | coffee website</title>
+    </head>
+    <body>
+        <header class="header" id="header">
+            <div class="header__border"></div>
+
+            <nav class="nav container">
+                <a href="index.html" class="nav__logo">
+                    <img src="assets/img/logo.png" alt="logo">
+                    BUMP
+                </a>
+            </nav>
+        </header>
+        <main class="main-content main" style="margin-inline: 70px; background-color: hsl(12, 32%, 22%); padding: 0px 60px 0px 60px;">
+            <div class="container">
+                <header>
+                <h1>Welcome, <span id="username"></span></h1>
+                <p>Email: <p id="email"></p></p>
+                </header>
+        
+                <section class="profile-info">
+                <h2>Your data</h2>
+                <ul>
+                    <li><strong>Username:</strong> <span id="username"></span></li>
+                    <li><strong>Email:</strong> <span id="email"></span></li>
+                </ul>
+                </section>
+        
+                <section class="settings">
+                <h2>Settings</h2>
+                <form>
+                    <label for="name">Change username:</label>
+                    <input type="text" id="name" name="name" placeholder="New username">
+        
+                    <label for="email">Change email:</label>
+                    <input type="email" id="email" name="email" placeholder="New email">
+        
+                    <button type="submit">Save</button>
+                </form>
+                </section>
+            </div>
+        </main>
+        <footer class="footer">
+            <div class="footer__bg">
+                <img src="assets/img/coffee-beans-bg.png" alt="footer image" class="footer__bg-img">
+
+                <div class="footer__container container grid">
+                    <div class="footer__data grid">
+                        <div>
+                            <a href="#" class="footer__logo">
+                                <img src="assets/img/logo.png" alt="logo">
+                                BUMP
+                            </a>
+                    </div>
+
+                    <div class="footer__content grid">
+                       <div class="footer__social">
+                            <a href="https://www.facebook.com/" target="_blank" class="footer__social-link">
+                                <i class="ri-facebook-fill"></i>
+                            </a>
+
+                            <a href="https://www.instagram.com/" target="_blank" class="footer__social-link">
+                                <i class="ri-instagram-fill"></i>
+                            </a>
+
+                            <a href="https://twitter.com/
+                            " target="_blank" class="footer__social-link">
+                                <i class="ri-twitter-fill"></i>
+                            </a>
+                       </div> 
+
+                       <span class="footer__copy">
+                        Copyright &#169; 2023 All rights reserved
+                       </span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        <a href="#" class="scrollup" id="scroll-up">
+            <i class="ri-arrow-up-line"></i>
+        </a>
+        <script src="assets/js/scrollreveal.min.js"></script>
+        <script src="assets/js/main.js"></script>
+    </body>
+</html>
