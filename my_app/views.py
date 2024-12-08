@@ -1,18 +1,30 @@
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, RegisterSerializer
 from rest_framework.decorators import api_view
-from rest_framework.permissions import IsAuthenticated
-from .models import Card, Product
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .models import Card, Product, UserProfile
 from django.views import View
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 from rest_framework import status
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.conf import settings
 import random
 import string
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import Entity
+from .serializers import EntitySerializer
+from .pagination import CustomPagination
+
+class EntityListView(APIView):
+    def get(self, request):
+        entities = Entity.objects.all()
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(entities, request)
+        serializer = EntitySerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class PurchaseProductView(View):
@@ -23,7 +35,6 @@ class PurchaseProductView(View):
         if product.stock < 1:
             return JsonResponse({'success': False, 'message': 'Продукт закончился на складе.'}, status=400)
 
-        # Обрабатываем покупку продукта
         product.stock -= 1
         product.save()
 
@@ -37,7 +48,6 @@ class RegisterCardView(APIView):
         if hasattr(request.user, 'card'):
             return Response({"error": "You already have a registered card."}, status=400)
 
-        # Создание карты
         card = Card(user=request.user)
         card.generate_card_details()
         card.save()
@@ -91,51 +101,76 @@ def purchase_product(request, product_id):
 
 class ProductListView(APIView):
     permission_classes = [AllowAny]
-
     def get(self, request):
         products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(products, request)
+        serializer = ProductSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get("username")
-        email = request.data.get("email")
-        password = request.data.get("password")
-        password_confirm = request.data.get("password_confirm")
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.is_active = False
+            user.save()
 
-        if User.objects.filter(email=email).exists():
-            return Response({"error": "Email is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            code = ''.join(random.choices(string.digits, k=6))
+            profile.verification_code = code
+            profile.save()
+            try:
+                sent_count = send_mail(
+                    'Email verification',
+                    f'Your verification code is: {code}',
+                    settings.EMAIL_HOST_USER,
+                    [user.email],
+                    fail_silently=False,
+                )
 
-        if password != password_confirm:
-            return Response({"error": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                print("Ошибка при отправке письма:", e)
+                return Response({"error": "Failed to send verification email."}, status=500)
+            print("Generated verification code:", code)
 
-        user = User.objects.create_user(username=username, email=email, password=password)
-        user.is_active = False
-        user.save()
-
-        return Response({"message": "User registered successfully. Please verify your email."}, status=status.HTTP_201_CREATED)
+            if sent_count == 1:
+                return Response({"message": "User registered successfully. Please verify your email."}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"error": "Failed to send verification email."}, status=500)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ConfirmEmailView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        verification_code = request.data.get("verification_code")
-        user_id = request.session.get('user_id')
+        email = request.data.get('email')
+        verification_code = request.data.get('verification_code')
 
-        if not verification_code or not user_id:
-            return Response({"error": "Missing data"}, status=status.HTTP_400_BAD_REQUEST)
+        if not email or not verification_code:
+            return Response({"error": "Email and verification code are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if verification_code == request.session.get('verification_code'):
-            user = User.objects.get(id=user_id)
+        try:
+            user = User.objects.get(email=email)
+            profile = UserProfile.objects.get(user=user)
+        except (User.DoesNotExist, UserProfile.DoesNotExist):
+            return Response({"error": "Invalid email or user not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if profile.verification_code == verification_code:
             user.is_active = True
             user.save()
+            profile.is_verified = True
+            profile.verification_code = None
+            profile.save()
 
             return Response({"message": "Your email has been confirmed, you can now log in."}, status=status.HTTP_200_OK)
-
-        return Response({"error": "Invalid confirmation code"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "Invalid confirmation code"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):
@@ -147,4 +182,3 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-

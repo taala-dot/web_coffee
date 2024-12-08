@@ -1,15 +1,18 @@
-from django.db import models
 import random
-from django.contrib.auth.models import User
 from datetime import timedelta
 from django.utils import timezone
+from django.db import models
+from django.contrib.auth.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    email = models.EmailField()
+    verification_code = models.CharField(max_length=64, null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.username
 
 class ProductPurchase(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)  # Связь с пользователем
@@ -20,7 +23,6 @@ class ProductPurchase(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.product.name}"
 
-    # Метод для отображения времени доставки как строки
     def get_delivery_time_str(self):
         return self.delivery_time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -46,6 +48,11 @@ class Card(models.Model):
         self.card_number = ''.join([str(random.randint(0, 9)) for _ in range(16)])
         self.card_password = ''.join([str(random.randint(0, 9)) for _ in range(3)])
         self.save()
+
+class Entity(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+
 
 
 class Product(models.Model):

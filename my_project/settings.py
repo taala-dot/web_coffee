@@ -25,20 +25,24 @@ SECRET_KEY = 'django-insecure-)%u#w**)$c)y&o^0=1kw0187249svn!m#hyhtcwkp+$t2_%#zi
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
 LANGUAGES = [
     ('en', 'English'),
     ('ru', 'Russian'),
 ]
 
 ALLOWED_HOSTS = []
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'talgat.temirov@alatoo.edu.kg'
-EMAIL_HOST_PASSWORD = ''
-DEFAULT_FROM_EMAIL = ''
+EMAIL_HOST_USER = 'django232324@gmail.com'    # ваша почта
+EMAIL_HOST_PASSWORD = 'Django.11'             # пароль или app password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 INSTALLED_APPS = [
+    'django_filters',
     'my_app',
     'drf_yasg',
     'rest_framework',
@@ -50,25 +54,28 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+# Конфигурация логирования
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',  # Уровень вывода информации
             'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
+            'level': 'INFO',
         },
     },
 }
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -77,8 +84,20 @@ REST_FRAMEWORK = {
     ),
 }
 
-AUTH_PASSWORD_VALIDATORS = []
-
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -107,22 +126,6 @@ TEMPLATES = [
         },
     },
 ]
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'INFO',  # Уровень вывода информации
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-    },
-}
 
 WSGI_APPLICATION = 'my_project.wsgi.application'
 
@@ -135,25 +138,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
 
 
 # Internationalization
