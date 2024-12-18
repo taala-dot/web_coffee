@@ -1,11 +1,10 @@
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import ProductSerializer, RegisterSerializer
-from rest_framework.decorators import api_view
+
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Card, Product, UserProfile
+from .models import Card, Product, UserProfile,Cart,CartItem,ProductPurchase
 from django.views import View
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
@@ -13,10 +12,12 @@ from django.conf import settings
 import random
 import string
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from .models import Entity
 from .serializers import EntitySerializer
 from .pagination import CustomPagination
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
 class EntityListView(APIView):
     def get(self, request):
@@ -171,6 +172,60 @@ class ConfirmEmailView(APIView):
             return Response({"message": "Your email has been confirmed, you can now log in."}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Invalid confirmation code"}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def add_to_cart(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    if not created:
+        cart_item.quantity += 1
+    cart_item.save()
+
+    return Response({"message": f"{product.name} added to cart."}, status=200)
+@api_view(['POST'])
+def remove_from_cart(request, product_id):
+    cart = get_object_or_404(Cart, user=request.user)
+    product = get_object_or_404(Product, id=product_id)
+
+    cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+    if cart_item:
+        cart_item.delete()
+
+    return Response({"message": f"{product.name} removed from cart."}, status=200)
+@api_view(['GET'])
+def view_cart(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    items = [{"product": item.product.name, "quantity": item.quantity, "price": item.product.price} for item in cart.items.all()]
+    total_price = sum(item.product.price * item.quantity for item in cart.items.all())
+
+    return Response({"items": items, "total_price": total_price}, status=200)
+
+
+@api_view(['POST'])
+def purchase_cart(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    card = get_object_or_404(Card, user=request.user)
+    total_price = sum(item.product.price * item.quantity for item in cart.items.all())
+
+    if card.balance < total_price:
+        return Response({"error": "Not enough balance on your card."}, status=400)
+
+    for item in cart.items.all():
+        if item.product.stock < item.quantity:
+            return Response({"error": f"Not enough stock for {item.product.name}."}, status=400)
+
+    # Покупка и создание записей
+    for item in cart.items.all():
+        item.product.stock -= item.quantity
+        item.product.save()
+        ProductPurchase.objects.create(user=request.user, product=item.product)
+
+    card.deduct(total_price)
+    cart.items.all().delete()  # Очистить корзину после покупки
+
+    return Response({"message": "Cart purchased successfully!"}, status=200)
 
 
 class LogoutView(APIView):

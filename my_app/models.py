@@ -4,6 +4,15 @@ from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    bio = models.TextField(blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.username
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
 class UserProfile(models.Model):
@@ -15,11 +24,10 @@ class UserProfile(models.Model):
         return self.user.username
 
 class ProductPurchase(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Связь с пользователем
-    product = models.ForeignKey('Product', on_delete=models.CASCADE)  # Связь с продуктом
-    purchase_time = models.DateTimeField(auto_now_add=True)  # Время покупки
-    delivery_time = models.DateTimeField(default=timezone.now() + timedelta(hours=2))  # Время доставки (2 часа от времени покупки)
-
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    purchase_time = models.DateTimeField(auto_now_add=True)
+    delivery_time = models.DateTimeField(default=timezone.now() + timedelta(hours=2))
     def __str__(self):
         return f"{self.user.username} - {self.product.name}"
 
@@ -67,4 +75,18 @@ class Product(models.Model):
         return self.name
 
     def get_category(self):
-        return self.category  # Просто возвращаем категорию как строку
+        return self.category
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="cart")
+    products = models.ManyToManyField(Product, through="CartItem")
+
+    def __str__(self):
+        return f"Cart of {self.user.username}"
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} in {self.cart.user.username}'s cart"

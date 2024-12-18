@@ -41,6 +41,12 @@ EMAIL_HOST_USER = 'django232324@gmail.com'    # ваша почта
 EMAIL_HOST_PASSWORD = 'Django.11'             # пароль или app password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',  # Путь к файлу базы данных
+    }
+}
 INSTALLED_APPS = [
     'django_filters',
     'my_app',
@@ -54,14 +60,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
-
-# Конфигурация логирования
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'INFO',  # Уровень вывода информации
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
         },
     },
@@ -132,12 +136,7 @@ WSGI_APPLICATION = 'my_project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+
 
 
 # Internationalization
